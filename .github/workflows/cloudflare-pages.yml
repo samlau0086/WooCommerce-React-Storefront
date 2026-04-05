@@ -19,13 +19,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # 推荐使用 18 或 20
+          node-version: '20' # 升级到 Node 20，自带的新版 npm 修复了该可选依赖 bug
 
       - name: Install dependencies
         run: |
           rm -rf package-lock.json node_modules
-          npm cache clean --force
-          npm install
+          npm install --include=optional
 
       - name: Build project
         run: npm run build
