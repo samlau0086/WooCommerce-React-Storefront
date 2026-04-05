@@ -1,4 +1,4 @@
-import { Product, BlogPost, Comment, ProductReview } from '../types';
+import { Product, BlogPost, Comment, ProductReview, PaymentGateway } from '../types';
 
 const API_URL = import.meta.env.VITE_WP_API_URL || '';
 const CONSUMER_KEY = import.meta.env.VITE_WC_CONSUMER_KEY || '';
@@ -207,5 +207,18 @@ export const addProductReview = async (productId: number, author_name: string, r
   } catch (error) {
     console.error('Error adding product review:', error);
     throw error;
+  }
+};
+
+export const getPaymentGateways = async (): Promise<PaymentGateway[]> => {
+  try {
+    const response = await fetch(getWcUrl('payment_gateways'));
+    if (!response.ok) throw new Error('Failed to fetch payment gateways');
+    const gateways = await response.json();
+    // Only return enabled gateways
+    return gateways.filter((g: any) => g.enabled);
+  } catch (error) {
+    console.error('Error fetching payment gateways:', error);
+    return [];
   }
 };

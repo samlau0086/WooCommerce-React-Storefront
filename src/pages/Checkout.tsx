@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { CheckCircle2, Tag } from 'lucide-react';
+import { CheckCircle2, Tag, CreditCard, Loader2 } from 'lucide-react';
+import { getPaymentGateways } from '../services/api';
+import { PaymentGateway } from '../types';
 
 export const Checkout: React.FC = () => {
   const { cart, cartTotal, clearCart } = useCart();
@@ -9,6 +11,11 @@ export const Checkout: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   
+  // Payment Gateways
+  const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+  const [isLoadingGateways, setIsLoadingGateways] = useState(true);
+
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -21,6 +28,25 @@ export const Checkout: React.FC = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
   const [registerMessage, setRegisterMessage] = useState('');
+
+  useEffect(() => {
+    const fetchGateways = async () => {
+      setIsLoadingGateways(true);
+      try {
+        const gateways = await getPaymentGateways();
+        setPaymentGateways(gateways);
+        if (gateways.length > 0) {
+          setSelectedPaymentMethod(gateways[0].id);
+        }
+      } catch (error) {
+        console.error('Error loading payment gateways:', error);
+      } finally {
+        setIsLoadingGateways(false);
+      }
+    };
+
+    fetchGateways();
+  }, []);
 
   const handleToggleLogin = () => {
     setShowLogin(!showLogin);
@@ -306,9 +332,44 @@ export const Checkout: React.FC = () => {
 
               <div className="mt-10 border-t border-gray-200 pt-10">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Payment Information</h2>
-                <div className="bg-white p-4 border border-gray-200 rounded-md text-sm text-gray-500 text-center">
-                  This is a demo storefront. No actual payment will be processed.
-                </div>
+                
+                {isLoadingGateways ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-gray-500">Loading payment methods...</span>
+                  </div>
+                ) : paymentGateways.length > 0 ? (
+                  <div className="space-y-4">
+                    {paymentGateways.map((gateway) => (
+                      <div key={gateway.id} className={`border rounded-lg p-4 cursor-pointer transition-colors ${selectedPaymentMethod === gateway.id ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`} onClick={() => setSelectedPaymentMethod(gateway.id)}>
+                        <div className="flex items-center">
+                          <input
+                            id={`payment-${gateway.id}`}
+                            name="payment_method"
+                            type="radio"
+                            value={gateway.id}
+                            checked={selectedPaymentMethod === gateway.id}
+                            onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                            className="h-4 w-4 text-black focus:ring-black border-gray-300"
+                          />
+                          <label htmlFor={`payment-${gateway.id}`} className="ml-3 flex items-center cursor-pointer">
+                            <span className="block text-sm font-medium text-gray-900">
+                              {gateway.title}
+                            </span>
+                          </label>
+                        </div>
+                        {selectedPaymentMethod === gateway.id && gateway.description && (
+                          <div className="mt-3 ml-7 text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: gateway.description }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-yellow-50 p-4 border border-yellow-200 rounded-md text-sm text-yellow-700 flex items-start">
+                    <CreditCard className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+                    <p>No payment methods are available. Please configure them in your WooCommerce settings.</p>
+                  </div>
+                )}
               </div>
             </form>
           </div>
@@ -399,7 +460,7 @@ export const Checkout: React.FC = () => {
                 <button
                   type="submit"
                   form="checkout-form"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || paymentGateways.length === 0}
                   className="w-full bg-black border border-transparent rounded-md shadow-sm py-3 px-4 text-base font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isSubmitting ? 'Processing...' : 'Place Order'}

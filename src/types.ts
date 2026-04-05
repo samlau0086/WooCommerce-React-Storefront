@@ -117,3 +117,12 @@ export interface ProductReview {
   content: string;
   date: string;
 }
+
+export interface PaymentGateway {
+  id: string;
+  title: string;
+  description: string;
+  enabled: boolean;
+  method_title: string;
+  method_description: string;
+}
