@@ -39,6 +39,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: 'woocommercereact' # ⚠️ 请替换为您在 Cloudflare Pages 上创建的项目名称
+          projectName: 'your-project-name' # ⚠️ 请替换为您在 Cloudflare Pages 上创建的项目名称
           directory: 'dist' # Vite 默认的打包输出目录
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
