@@ -1,0 +1,5 @@
+{
+  "name": "WooCommerce React Storefront",
+  "description": "A headless e-commerce storefront built with React, designed to connect to a WordPress + WooCommerce backend.",
+  "requestFramePermissions": []
+}
